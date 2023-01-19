@@ -4,6 +4,7 @@ import io.grpc.stub.StreamObserver;
 import vn.unicloud.eventbus.protobuf.*;
 
 public class GenericQueueServiceImpl extends GenericQueueServiceGrpc.GenericQueueServiceImplBase {
+
     @Override
     public StreamObserver<FetchRequest> subscribe(StreamObserver<FetchResponse> responseObserver) {
         return new StreamObserver<FetchRequest>() {

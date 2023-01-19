@@ -12,6 +12,7 @@ public class CircularLinkedList<E> {
     private Node<E> tail = null;
 
     public E getHead() {
+
         return head.value;
     }
 
