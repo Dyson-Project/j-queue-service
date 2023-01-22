@@ -1,107 +1,61 @@
-/*
- * Salesforce Pub/Sub API Version 1.
- */
-
 syntax = "proto3";
-package eventbus.v1;
+package genericqueue.v1;
 
 option java_multiple_files = true;
-option java_package = "vn.unicloud.eventbus.protobuf";
-option java_outer_classname = "PubSubProto";
+option java_package = "vn.unicloud.genericqueue.protobuf";
+option java_outer_classname = "GenericQueueProto";
 
-option go_package = "github.com/developerforce/pub-sub-api-pilot/go/proto";
-
-/*
- * Contains information about a topic and uniquely identifies it. TopicInfo is returned by the GetTopic RPC method.
- */
-message TopicInfo {
-  // Topic name
-  string topic_name = 1;
-  // Tenant/org GUID
-  string tenant_guid = 2;
-  // Is publishing allowed?
-  bool can_publish = 3;
-  // Is subscription allowed?
-  bool can_subscribe = 4;
-  /* ID of the current topic schema, which can be used for
-   * publishing of generically serialized events.
-   */
-  string schema_id = 5;
-  // RPC ID used to trace errors.
-  string rpc_id = 6;
-}
-
-/*
- * A request message for GetTopic. Note that the tenant/org is not directly referenced
- * in the request, but is implicitly identified by the authentication headers.
- */
-message TopicRequest {
-  // The name of the topic to retrieve.
-  string topic_name = 1;
-}
+option go_package = "github.com/tiktzuki/genericequeue/go/proto";
+import "error.proto";
+import "schema_service.proto";
+import "topic_service.proto";
 
 /*
  * Reserved for future use.
  * Header that contains information for distributed tracing, filtering, routing, etc.
- * For example, X-B3-* headers assigned by a publisher are stored with the event and
- * can provide a full distributed trace of the event across its entire lifecycle.
+ * For example, X-B3-* headers assigned by a publisher are stored with the message and
+ * can provide a full distributed trace of the message across its entire lifecycle.
  */
-message EventHeader {
+message MessageHeader {
   string key = 1;
   bytes value = 2;
 }
 
 /*
- * Represents an event that an event publishing app creates.
+ * Represents an message that an message publishing app creates.
  */
-message ProducerEvent {
-  // The event's system generated guid
+message ProducerMessage {
+  // The message's system generated guid
   string id = 1;
-  // Schema fingerprint for this event which is hash of the schema
+  // Schema fingerprint for this message which is hash of the schema
   string schema_id = 2;
   // The message data field
   bytes payload = 3;
   // Reserved for future use. Key-value pairs of headers.
-  repeated EventHeader headers = 4;
+  repeated MessageHeader headers = 4;
 }
 
 /*
- * Represents an event that is consumed in a subscriber client.
- * In addition to the fields in ProducerEvent, ConsumerEvent has the replay_id field.
+ * Represents an message that is consumed in a subscriber client.
+ * In addition to the fields in ProducerMessage, ConsumerMessage has the replay_id field.
  */
-message ConsumerEvent {
-  // The event with fields identical to ProducerEvent
-  ProducerEvent event = 1;
-  /* The replay ID of the event.
+message ConsumerMessage {
+  // The message's system generated guid
+  string id = 1;
+  // Schema fingerprint for this message which is hash of the schema
+  string schema_id = 2;
+  // The message data field
+  bytes payload = 3;
+  // Reserved for future use. Key-value pairs of headers.
+  repeated MessageHeader headers = 4;
+  /* The replay ID of the message.
    * A subscriber app can store the replay ID. When the app restarts, it can resume subscription
-   * starting from events in the event bus after the event with that replay ID.
+   * starting from messages in the message bus after the message with that replay ID.
    */
-  bytes replay_id = 2;
+  bytes replay_id = 5;
 }
 
-/*
- * Event publish result that the Publish RPC method returns. The result contains replay_id or a publish error.
- */
-message PublishResult {
-  // Replay ID of the event
-  bytes replay_id = 1;
-  // Publish error if any
-  Error error = 2;
-}
 
-// Contains error information for an error that an RPC method returns.
-message Error {
-  // Error code
-  ErrorCode code = 1;
-  // Error message
-  string msg = 2;
-}
-
-// Supported error codes
-enum ErrorCode {
-  UNKNOWN = 0;
-  PUBLISH = 1;
-}
 
 /*
  * Supported subscription replay start values.
@@ -119,7 +73,7 @@ enum ReplayPreset {
 /*
  * Request for the Subscribe streaming RPC method. This request is used to:
  * 1. Establish the initial subscribe stream.
- * 2. Request more events from the subscription stream.
+ * 2. Request more messages from the subscription stream.
  * Flow Control is handled by the subscriber via num_requested.
  * A client can specify a starting point for the subscription with replay_preset and replay_id combinations.
  * If no replay_preset is specified, the subscription starts at LATEST (tip of the stream).
@@ -132,96 +86,83 @@ message FetchRequest {
    * in subsequent FetchRequests within the same subscribe stream, but can be omitted for efficiency.
    */
   string topic_name = 1;
-
+  uint32 queue_index = 2;
   /*
    * Subscription starting point. This is consumed only as part of the first FetchRequest
    * when the subscription is set up.
    */
-  ReplayPreset replay_preset = 2;
+  ReplayPreset replay_preset = 3;
   /*
    * If replay_preset of CUSTOM is selected, specify the subscription point to start after.
    * This is consumed only as part of the first FetchRequest when the subscription is set up.
    */
-  bytes replay_id = 3;
-  /*
-   * Number of events a client is ready to accept. Each subsequent FetchRequest informs the server
-   * of additional processing capacity available on the client side. There is no guarantee of equal number of
-   * FetchResponse messages to be sent back. There is not necessarily a correspondence between
-   * number of requested events in FetchRequest and the number of events returned in subsequent
-   * FetchResponses.
-   */
-  int32 num_requested = 4;
-  // For internal Salesforce use only.
-  string auth_refresh = 5;
+  bytes replay_id = 4;
 }
 
+message GetListRequest {
+  string topic_name = 1;
+  uint32 queue_index = 2;
+  uint32 offset = 3;
+  uint32 limit = 4;
+}
 /*
- * Response for the Subscribe streaming RPC method. This returns ConsumerEvent(s).
- * If there are no events to deliver, the server sends an empty batch fetch response with the latest replay ID. The
+ * Response for the Subscribe streaming RPC method. This returns ConsumerMessage(s).
+ * If there are no messages to deliver, the server sends an empty batch fetch response with the latest replay ID. The
  * empty fetch response is sent within 270 seconds. An empty fetch response provides a periodic keepalive from the
  * server and the latest replay ID.
  */
 message FetchResponse {
-  // Received events for subscription for client consumption
-  repeated ConsumerEvent events = 1;
+  // Received messages for subscription for client consumption
+  repeated ConsumerMessage messages = 1;
   // Latest replay ID of a subscription. Enables clients with an updated replay value so that they can keep track
   // of their last consumed replay. Clients will not have to start a subscription at a very old replay in the case where a resubscribe is necessary.
   bytes latest_replay_id = 2;
   // RPC ID used to trace errors.
   string rpc_id = 3;
-  // Number of remaining events to be delivered to the client for a Subscribe RPC call.
-  int32 pending_num_requested = 4;
-}
-
-/*
- * Request for the GetSchema RPC method. The schema request is based on the event schema ID.
- */
-message SchemaRequest {
-  // Schema fingerprint for this event, which is a hash of the schema.
-  string schema_id = 1;
-}
-
-/*
- * Response for the GetSchema RPC method. This returns the schema ID and schema of an event.
- */
-message SchemaInfo {
-  // Avro schema in JSON format
-  string schema_json = 1;
-  // Schema fingerprint
-  string schema_id = 2;
-  // RPC ID used to trace errors.
-  string rpc_id = 3;
+  // Number of remaining messages to be delivered to the client for a Subscribe RPC call.
+  uint32 pending_num_requested = 4;
 }
 
 // Request for the Publish and PublishStream RPC method.
 message PublishRequest {
   // Topic to publish on
   string topic_name = 1;
-  // Batch of ProducerEvent(s) to send
-  repeated ProducerEvent events = 2;
+  uint32 queue_index = 2;
+  // Batch of ProducerMessage(s) to send
+  repeated ProducerMessage messages = 3;
   // For internal Salesforce use only.
-  string auth_refresh = 3;
+  string auth_refresh = 4;
+}
+
+/*
+ * Message publish result that the Publish RPC method returns. The result contains replay_id or a publish error.
+ */
+message PublishResult {
+  // Replay ID of the message
+  bytes replay_id = 1;
+  // Publish error if any
+  Error error = 2;
 }
 
 /*
  * Response for the Publish and PublishStream RPC methods. This returns
- * a list of PublishResults for each event that the client attempted to
+ * a list of PublishResults for each message that the client attempted to
  * publish. PublishResult indicates if publish succeeded or not
- * for each event. It also returns the schema ID that was used to create
- * the ProducerEvents in the PublishRequest.
+ * for each message. It also returns the schema ID that was used to create
+ * the ProducerMessages in the PublishRequest.
  */
 message PublishResponse {
   // Publish results
   repeated PublishResult results = 1;
-  // Schema fingerprint for this event, which is a hash of the schema
+  // Schema fingerprint for this message, which is a hash of the schema
   string schema_id = 2;
   // RPC ID used to trace errors.
   string rpc_id = 3;
 }
 
 /*
- * The Pub/Sub API provides a single interface for publishing and subscribing to platform events, including real-time
- * event monitoring events, and change data capture events. The Pub/Sub API is a gRPC API that is based on HTTP/2.
+ * The Pub/Sub API provides a single interface for publishing and subscribing to platform messages, including real-time
+ * message monitoring messages, and change data capture messages. The Pub/Sub API is a gRPC API that is based on HTTP/2.
  *
  * A session token is needed to authenticate. Any of the Salesforce supported
  * OAuth flows can be used to obtain a session token:
@@ -238,21 +179,52 @@ message PublishResponse {
  * StatusException is thrown in case of response failure for any request.
  */
 service GenericQueueService {
+
+  /*
+   * Send a publish request to synchronously publish messages to a topic.
+   */
+  rpc Publish (PublishRequest) returns (PublishResponse);
+
+  /*
+   * Bidirectional Streaming RPC to publish messages to the message bus.
+   * PublishRequest contains the batch of messages to publish.
+   *
+   * The first PublishRequest of the stream identifies the topic to publish on.
+   * If any subsequent PublishRequest provides topic_name, it must match what
+   * was provided in the first PublishRequest; otherwise, the RPC returns an error
+   * with INVALID_ARGUMENT status.
+   *
+   * The server returns a PublishResponse for each PublishRequest when publish is
+   * complete for the batch. A client does not have to wait for a PublishResponse
+   * before sending a new PublishRequest, i.e. multiple publish batches can be queued
+   * up, which allows for higher publish rate as a client can asynchronously
+   * publish more messages while publishes are still in flight on the server side.
+   *
+   * PublishResponse holds a PublishResult for each message published that indicates success
+   * or failure of the publish. A client can then retry the publish as needed before sending
+   * more PublishRequests for new messages to publish.
+   *
+   * A client must send a valid publish request with one or more messages every 70 seconds to hold on to the stream.
+   * Otherwise, the server closes the stream and notifies the client. Once the client is notified of the stream closure,
+   * it must make a new PublishStream call to resume publishing.
+   */
+  rpc PublishStream (stream PublishRequest) returns (stream PublishResponse);
+
   /*
    * Bidirectional streaming RPC to subscribe to a Topic. The subscription is pull-based. A client can request
-   * for more events as it consumes events. This enables a client to handle flow control based on the client's processing speed.
+   * for more messages as it consumes messages. This enables a client to handle flow control based on the client's processing speed.
    *
    * Typical flow:
-   * 1. Client requests for X number of events via FetchRequest.
-   * 2. Server receives request and delivers events until X events are delivered to the client via one or more FetchResponse messages.
+   * 1. Client requests for X number of messages via FetchRequest.
+   * 2. Server receives request and delivers messages until X messages are delivered to the client via one or more FetchResponse messages.
    * 3. Client consumes the FetchResponse messages as they come.
-   * 4. Client issues new FetchRequest for Y more number of events. This request can
-   *    come before the server has delivered the earlier requested X number of events
-   *    so the client gets a continuous stream of events if any.
+   * 4. Client issues new FetchRequest for Y more number of messages. This request can
+   *    come before the server has delivered the earlier requested X number of messages
+   *    so the client gets a continuous stream of messages if any.
    *
-   * If a client requests more events before the server finishes the last
+   * If a client requests more messages before the server finishes the last
    * requested amount, the server appends the new amount to the current amount of
-   * events it still needs to fetch and deliver.
+   * messages it still needs to fetch and deliver.
    *
    * A client can subscribe at any point in the stream by providing a replay option in the first FetchRequest.
    * The replay option is honored for the first FetchRequest received from a client. Any subsequent FetchRequests with a
@@ -264,45 +236,13 @@ service GenericQueueService {
    * was provided in the first FetchRequest; otherwise, the RPC returns an error
    * with INVALID_ARGUMENT status.
    */
-  rpc Subscribe (stream FetchRequest) returns (stream FetchResponse);
+  rpc SubscribeStream (stream FetchRequest) returns (stream FetchResponse);
 
-  // Get the event schema for a topic based on a schema ID.
-  rpc GetSchema (SchemaRequest) returns (SchemaInfo);
+  rpc Subscribe (FetchRequest) returns (stream FetchResponse);
 
-  /*
-   * Get the topic Information related to the specified topic.
-   */
-  rpc GetTopic (TopicRequest) returns (TopicInfo);
+  rpc Poll (FetchRequest) returns (FetchResponse);
 
-  /*
-   * Send a publish request to synchronously publish events to a topic.
-   */
-  rpc Publish (PublishRequest) returns (PublishResponse);
-
-  /*
-   * Bidirectional Streaming RPC to publish events to the event bus.
-   * PublishRequest contains the batch of events to publish.
-   *
-   * The first PublishRequest of the stream identifies the topic to publish on.
-   * If any subsequent PublishRequest provides topic_name, it must match what
-   * was provided in the first PublishRequest; otherwise, the RPC returns an error
-   * with INVALID_ARGUMENT status.
-   *
-   * The server returns a PublishResponse for each PublishRequest when publish is
-   * complete for the batch. A client does not have to wait for a PublishResponse
-   * before sending a new PublishRequest, i.e. multiple publish batches can be queued
-   * up, which allows for higher publish rate as a client can asynchronously
-   * publish more events while publishes are still in flight on the server side.
-   *
-   * PublishResponse holds a PublishResult for each event published that indicates success
-   * or failure of the publish. A client can then retry the publish as needed before sending
-   * more PublishRequests for new events to publish.
-   *
-   * A client must send a valid publish request with one or more events every 70 seconds to hold on to the stream.
-   * Otherwise, the server closes the stream and notifies the client. Once the client is notified of the stream closure,
-   * it must make a new PublishStream call to resume publishing.
-   */
-  rpc PublishStream (stream PublishRequest) returns (stream PublishResponse);
+  rpc GetList (GetListRequest) returns (stream FetchResponse);
 }
 
 // Style guide: https://developers.google.com/protocol-buffers/docs/style

@@ -13,14 +13,16 @@
 //
 //import org.apache.avro.Schema;
 //import vn.unicloud.eventbus.protobuf.*;
+//import vn.unicloud.genericqueue.client.auth.AuthenticationHelper;
+//import vn.unicloud.genericqueue.client.auth.SalesforceSession;
 //import vn.unicloud.genericqueue.client.configuration.Config;
 //public class PubSubApiClient {
 //	private static final Logger logger = Logger.getLogger(PubSubApiClient.class.getName());
 //
 //	private boolean isShuttingDown = false;
 //	private ManagedChannel channel;
-//	private PubSubGrpc.PubSubStub stub;
-//	private PubSubGrpc.PubSubBlockingStub blockingStub;
+//	private GenericQueueServiceGrpc.GenericQueueServiceStub stub;
+//	private GenericQueueServiceGrpc.GenericQueueServiceBlockingStub blockingStub;
 //
 //	public void connect(Config config) throws PubSubException {
 //
@@ -45,10 +47,10 @@
 //			channel = ManagedChannelBuilder.forTarget(config.getPubSubEndpoint()).intercept(interceptor).build();
 //
 //			// We use a non-blocking stub for subscribe request and async event handling
-//			stub = PubSubGrpc.newStub(channel);
+//			stub = GenericQueueServiceGrpc.newStub(channel);
 //			// We use a blocking stub for getTopic and getSchema requests (less code
 //			// required)
-//			blockingStub = PubSubGrpc.newBlockingStub(channel);
+//			blockingStub = GenericQueueServiceGrpc.newBlockingStub(channel);
 //		} catch (Exception e) {
 //			throw new PubSubException("Failed to connect: " + e.getMessage(), e);
 //		}

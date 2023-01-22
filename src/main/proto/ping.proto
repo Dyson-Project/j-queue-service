@@ -1,0 +1,20 @@
+syntax = "proto3";
+package ping.v1;
+
+option java_multiple_files = true;
+option java_package = "vn.unicloud.eventbus.protobuf";
+option java_outer_classname = "PringProto";
+
+option go_package = "github.com/tiktzuki/ping/go/proto";
+
+message PingRequest {
+}
+
+message PingResponse {
+  bool pong = 1;
+}
+
+service PingService {
+  rpc Ping (PingRequest) returns (PingResponse);
+  rpc PingStream (PingRequest) returns (stream PingResponse);
+}

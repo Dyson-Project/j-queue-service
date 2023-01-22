@@ -1,0 +1,41 @@
+syntax = "proto3";
+package genericqueue.v1;
+
+option java_multiple_files = true;
+option java_package = "vn.unicloud.genericqueue.protobuf";
+option java_outer_classname = "SchemaProto";
+
+option go_package = "github.com/tiktzuki/genericequeue/go/proto";
+
+/*
+ * Request for the GetSchema RPC method. The schema request is based on the event schema ID.
+ */
+message GetSchemaRequest {
+  // Schema fingerprint for this event, which is a hash of the schema.
+  string schema_id = 1;
+}
+
+message UpdateSchemaRequest {
+  string schema_id = 1;
+  string schema_json = 2;
+}
+
+/*
+ * Response for the GetSchema RPC method. This returns the schema ID and schema of an message.
+ */
+message SchemaInfo {
+  // Schema fingerprint
+  string schema_id = 1;
+  // Avro schema in JSON format
+  string schema_json = 2;
+  // RPC ID used to trace errors.
+  string rpc_id = 3;
+}
+
+service SchemaService {
+  // Get the message schema for a topic based on a schema ID.
+  rpc GetSchema (GetSchemaRequest) returns (SchemaInfo);
+
+  rpc UpdateSchema (UpdateSchemaRequest) returns (SchemaInfo);
+
+}

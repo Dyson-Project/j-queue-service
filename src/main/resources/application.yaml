@@ -1,0 +1,10 @@
+# ===============================
+# GRPC [queue service]
+# ===============================
+grpc:
+  client:
+    agent-queue:
+      address: 'static://127.0.0.1:9090'
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext

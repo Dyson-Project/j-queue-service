@@ -1,0 +1,14 @@
+syntax = "proto3";
+package schema.vekyc;
+
+option java_multiple_files = true;
+option java_package = "vn.unicloud.schema.protobuf";
+option java_outer_classname = "AgentProto";
+
+option go_package = "github.com/tiktzuki/generice-queue/go/proto";
+
+message GAgent {
+  string id = 1;
+  string cif = 2;
+  string name = 3;
+}

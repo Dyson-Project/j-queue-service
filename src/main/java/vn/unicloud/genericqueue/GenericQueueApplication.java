@@ -1,22 +1,18 @@
 package vn.unicloud.genericqueue;
 
-import io.grpc.Server;
-import io.grpc.ServerBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import vn.unicloud.genericqueue.server.services.GenericQueueServiceImpl;
+import vn.unicloud.genericqueue.server.controllers.GenericQueueServiceControllerImpl;
+import vn.unicloud.genericqueue.server.controllers.PingControllerImpl;
 
+import javax.inject.Inject;
 import java.io.IOException;
 
 @SpringBootApplication
 public class GenericQueueApplication {
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        Server server = ServerBuilder
-                .forPort(5050)
-                .addService(new GenericQueueServiceImpl())
-                .build();
-        server.start();
-        server.awaitTermination();
+        SpringApplication.run(GenericQueueApplication.class, args);
     }
-
 }

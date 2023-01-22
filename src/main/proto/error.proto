@@ -1,0 +1,22 @@
+syntax = "proto3";
+package genericqueue.v1;
+
+option java_multiple_files = true;
+option java_package = "vn.unicloud.genericqueue.protobuf";
+option java_outer_classname = "ErrorProto";
+
+option go_package = "github.com/tiktzuki/genericequeue/go/proto";
+
+// Contains error information for an error that an RPC method returns.
+message Error {
+  // Error code
+  ErrorCode code = 1;
+  // Error message
+  string msg = 2;
+}
+
+// Supported error codes
+enum ErrorCode {
+  UNKNOWN = 0;
+  PUBLISH = 1;
+}

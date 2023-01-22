@@ -1,0 +1,67 @@
+syntax = "proto3";
+package genericqueue.v1;
+
+option java_multiple_files = true;
+option java_package = "vn.unicloud.genericqueue.protobuf";
+option java_outer_classname = "TopicProto";
+
+option go_package = "github.com/tiktzuki/genericequeue/go/proto";
+import "schema_service.proto";
+import "error.proto";
+
+enum QueueType {
+  CIRCULAR_LINKED_LIST = 0;
+  CIRCULAR_ARRAY = 1;
+}
+/*
+ * Contains information about a topic and uniquely identifies it. TopicInfo is returned by the GetTopic RPC method.
+ */
+message TopicInfo {
+  // Topic name
+  string topic_name = 1;
+  // Tenant/org GUID
+  string tenant_guid = 2;
+  /* ID of the current topic schema, which can be used for
+   * publishing of generically serialized events.
+   */
+  string schema_id = 5;
+  QueueType queue_type = 6;
+  uint32 topicSize = 7;
+  // RPC ID used to trace errors.
+  string rpc_id = 8;
+}
+
+/*
+ * A request message for GetTopic. Note that the tenant/org is not directly referenced
+ * in the request, but is implicitly identified by the authentication headers.
+ */
+message GetTopicRequest {
+  // The name of the topic to retrieve.
+  string topic_name = 1;
+}
+
+message CreateTopicRequest{
+  string topic_name = 1;
+
+  SchemaInfo schema = 2;
+}
+
+message DeleteTopicRequest {
+  string topic_name = 1;
+}
+
+message DeleteTopicResponse {
+  bool is_success = 1;
+  Error error = 2;
+}
+
+service TopicService {
+  /*
+   * Get the topic Information related to the specified topic.
+   */
+  rpc GetTopic (GetTopicRequest) returns (TopicInfo);
+
+  rpc CreateTopic (CreateTopicRequest) returns (TopicInfo);
+
+  rpc DeleteTopic (DeleteTopicRequest) returns (DeleteTopicResponse);
+}

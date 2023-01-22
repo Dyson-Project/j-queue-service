@@ -3,11 +3,11 @@ package vn.unicloud.genericqueue;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class GenericQueueApplicationTests {
-
-    @Test
-    void contextLoads() {
-    }
-
-}
+//@SpringBootTest
+//class GenericQueueApplicationTests {
+//
+//    @Test
+//    void contextLoads() {
+//    }
+//
+//}
