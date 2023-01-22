@@ -14,9 +14,11 @@ import vn.unicloud.genericqueue.server.algorithm.CircularQueue;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Queue;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -29,17 +31,37 @@ public class QueueManager {
         return null;
     }
 
-    public void offer(String topic, int queueIndex, byte[] payload) {
-        topicMap.get(topic)[queueIndex].offer(payload);
+    public boolean offer(String topic, int queueIndex, byte[] payload) {
+        return topicMap.get(topic)[queueIndex].offer(payload);
     }
 
-    public void createTopic(CreateTopicRequest request) {
+    public void publish(PublishRequest request) {
+        String topic = request.getTopicName();
+        request.getMessagesList().forEach(e -> {
+            boolean offerResult = offer(
+                    topic,
+                    request.getQueueIndex(),
+                    e.getPayload().toByteArray()
+            );
+            log.info("offer rs: {}, {}, size {}", e.getId(), offerResult, topicMap.get(topic)[request.getQueueIndex()].size());
+        });
+        log.info(topicMap.get(topic)[0]);
+    }
+
+    public TopicInfo createTopic(CreateTopicRequest request) {
         String topicName = request.getTopicName();
         QueueType queueType = request.getQueueType();
+        int topicSize = request.getTopicSize();
         log.info("create topic {}", topicName);
-        Queue<byte[]>[] queues = (Queue<byte[]>[]) Stream.generate(() -> this.newQueue(queueType))
-                .limit(request.getTopicSize()).toArray();
+        Queue<byte[]>[] queues = Stream.generate(() -> this.newQueue(queueType))
+                .limit(topicSize).toArray(Queue[]::new);
         topicMap.put(topicName, queues);
+        return TopicInfo.newBuilder()
+                .setTopicName(topicName)
+                .setSchemaId(UUID.randomUUID().toString())
+                .setQueueType(queueType)
+                .setTopicSize(topicSize)
+                .build();
     }
 
     @SneakyThrows
@@ -52,13 +74,15 @@ public class QueueManager {
                     .message("Queue not found")
                     .build();
         }
-        Queue<byte[]> queue = topicMap.get(request.getTopicName())[request.getQueueIndex()];
-        Iterable<ConsumerMessage> messages= (Iterable<ConsumerMessage>) queue.stream()
-                .skip(request.getOffset())
-                .limit(request.getLimit())
+        Queue<byte[]> queue = topicMap.get(topicName)[queueIndex];
+        log.info(topicMap);
+        log.info(queue);
+        Iterable<ConsumerMessage> messages = queue.stream()
+//                .skip(request.getOffset())
+//                .limit(request.getLimit())
                 .map(e -> ConsumerMessage.newBuilder()
                         .setPayload(ByteString.copyFrom(e))
-                        .build()).iterator();
+                        .build())::iterator;
         return FetchResponse.newBuilder()
                 .addAllMessages(messages)
                 .build();

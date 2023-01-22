@@ -56,6 +56,7 @@ dependencies {
     implementation group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufVersion
     implementation group: "net.devh", name: "grpc-client-spring-boot-starter", version: "2.14.0.RELEASE"
     implementation group: "net.devh", name: "grpc-server-spring-boot-starter", version: "2.14.0.RELEASE"
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
 
     implementation 'org.apache.tomcat:annotations-api:6.0.53'
     implementation 'org.apache.httpcomponents.client5:httpclient5:5.1.3'

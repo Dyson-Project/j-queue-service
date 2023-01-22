@@ -4,12 +4,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class CircularQueue<E> extends AbstractQueue<E> {
     final Logger logger = LoggerFactory.getLogger(CircularQueue.class);
 
     private Node<E> head = null;
     private Node<E> tail = null;
+    private int size = 0;
 
     public E getHead() {
         return head.value;
@@ -29,6 +31,7 @@ public class CircularQueue<E> extends AbstractQueue<E> {
 
         tail = newNode;
         tail.nextNode = head;
+        size++;
         return true;
     }
 
@@ -47,6 +50,7 @@ public class CircularQueue<E> extends AbstractQueue<E> {
             head = currentNode.nextNode;
             tail.nextNode = head;
         }
+        size--;
         return currentNode.value;
     }
 
@@ -69,12 +73,12 @@ public class CircularQueue<E> extends AbstractQueue<E> {
 
     @Override
     public Iterator<E> iterator() {
-        return Collections.emptyIterator();
+        return new Itr();
     }
 
     @Override
     public int size() {
-        return 0;
+        return size;
     }
 
     @Override
@@ -119,11 +123,13 @@ public class CircularQueue<E> extends AbstractQueue<E> {
                         tail = currentNode;
                     }
                 }
+                size--;
                 break;
             }
             currentNode = nextNode;
         } while (currentNode != head);
     }
+
     public static class Node<E> {
 
         E value;
@@ -133,5 +139,28 @@ public class CircularQueue<E> extends AbstractQueue<E> {
             this.value = value;
         }
 
+    }
+
+    private class Itr implements Iterator<E> {
+        Node<E> cursor;
+
+        Itr(){
+            cursor = CircularQueue.this.head;
+        }
+
+        public boolean hasNext() {
+            return this.cursor != null && this.cursor.nextNode!=null && this.cursor != CircularQueue.this.tail;
+        }
+
+        public E next() {
+            Node<E> i = this.cursor;
+            if (i==null) {
+                throw new NoSuchElementException();
+            } else {
+                E v = this.cursor.value;
+                this.cursor = this.cursor.nextNode;
+                return v;
+            }
+        }
     }
 }

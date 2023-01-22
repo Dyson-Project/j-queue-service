@@ -57,16 +57,7 @@ public class GenericQueueServiceControllerImpl extends GenericQueueServiceGrpc.G
 
     @Override
     public void publish(PublishRequest request, StreamObserver<PublishResponse> responseObserver) {
-        String topic = request.getTopicName();
-
-        request.getMessagesList().forEach(e -> {
-            queueManager.offer(
-                    topic,
-                    request.getQueueIndex(),
-                    e.getPayload().toByteArray()
-            );
-        });
-
+        queueManager.publish(request);
         PublishResponse res = PublishResponse.newBuilder()
                 .addResults(PublishResult.newBuilder().build())
                 .build();

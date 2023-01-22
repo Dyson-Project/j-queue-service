@@ -44,6 +44,8 @@ message CreateTopicRequest{
   string topic_name = 1;
 
   SchemaInfo schema = 2;
+  QueueType queue_type = 3;
+  int32 topic_size = 4;
 }
 
 message DeleteTopicRequest {

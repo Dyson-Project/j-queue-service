@@ -1,0 +1,51 @@
+<!--<constraint-mappings-->
+<!--        xmlns="http://xmlns.jcp.org/xml/ns/validation/mapping"-->
+<!--        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"-->
+<!--        xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/validation/mapping-->
+<!--            http://xmlns.jcp.org/xml/ns/validation/mapping/validation-mapping-2.0.xsd"-->
+<!--        version="2.0">-->
+
+<!--    <bean class="io.grpc.examples.GreeterOuterClass$Person">-->
+<!--        <class>-->
+<!--            <constraint annotation="org.lognet.springboot.grpc.demo.PersonConstraint"/>-->
+<!--        </class>-->
+<!--        <getter name="name">-->
+<!--            <constraint annotation="jakarta.validation.constraints.NotEmpty"/>-->
+<!--        </getter>-->
+<!--        <getter name="nickName">-->
+
+<!--            &lt;!&ndash;should be empty for request message&ndash;&gt;-->
+<!--            <constraint annotation="jakarta.validation.constraints.Size">-->
+<!--                <groups>-->
+<!--                    <value>org.lognet.springboot.grpc.validation.group.RequestMessage</value>-->
+<!--                </groups>-->
+<!--                <element name="min">0</element>-->
+<!--                <element name="max">0</element>-->
+
+<!--            </constraint>-->
+
+<!--            &lt;!&ndash;should NOT  be empty for response message&ndash;&gt;-->
+<!--            <constraint annotation="jakarta.validation.constraints.NotEmpty">-->
+<!--                <groups>-->
+<!--                    <value>org.lognet.springboot.grpc.validation.group.ResponseMessage</value>-->
+<!--                </groups>-->
+<!--            </constraint>-->
+<!--        </getter>-->
+
+<!--        <getter name="age">-->
+<!--            <constraint annotation="jakarta.validation.constraints.Max">-->
+<!--                <element name="value">120</element>-->
+<!--            </constraint>-->
+<!--        </getter>-->
+
+<!--        <method name="hasAddress">-->
+<!--            <return-value>-->
+<!--                <constraint annotation="jakarta.validation.constraints.AssertTrue"/>-->
+<!--            </return-value>-->
+<!--        </method>-->
+
+
+<!--    </bean>-->
+
+
+<!--</constraint-mappings>-->

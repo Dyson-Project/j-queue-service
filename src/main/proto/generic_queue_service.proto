@@ -101,9 +101,9 @@ message FetchRequest {
 
 message GetListRequest {
   string topic_name = 1;
-  uint32 queue_index = 2;
-  uint32 offset = 3;
-  uint32 limit = 4;
+  int32 queue_index = 2;
+  int32 offset = 3;
+  int32 limit = 4;
 }
 /*
  * Response for the Subscribe streaming RPC method. This returns ConsumerMessage(s).
@@ -127,7 +127,7 @@ message FetchResponse {
 message PublishRequest {
   // Topic to publish on
   string topic_name = 1;
-  uint32 queue_index = 2;
+  int32 queue_index = 2;
   // Batch of ProducerMessage(s) to send
   repeated ProducerMessage messages = 3;
   // For internal Salesforce use only.
