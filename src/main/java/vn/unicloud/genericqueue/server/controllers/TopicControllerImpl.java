@@ -7,14 +7,16 @@ import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
 import vn.unicloud.genericqueue.protobuf.*;
 import vn.unicloud.genericqueue.server.services.QueueManager;
+import vn.unicloud.genericqueue.server.services.TopicService;
 
 import javax.inject.Inject;
 
 @GrpcService
 @Slf4j
 public class TopicControllerImpl extends TopicServiceGrpc.TopicServiceImplBase {
+
     @Inject
-    private QueueManager queueManager;
+    private TopicService topicService;
 
     @Override
     public void getTopic(GetTopicRequest request, StreamObserver<TopicInfo> responseObserver) {
@@ -23,14 +25,13 @@ public class TopicControllerImpl extends TopicServiceGrpc.TopicServiceImplBase {
 
     @Override
     public void createTopic(CreateTopicRequest request, StreamObserver<TopicInfo> responseObserver) {
-        responseObserver.onNext(
-                queueManager.createTopic(request)
-        );
+        responseObserver.onNext(topicService.createTopic(request));
         responseObserver.onCompleted();
     }
 
     @Override
     public void deleteTopic(DeleteTopicRequest request, StreamObserver<DeleteTopicResponse> responseObserver) {
-        super.deleteTopic(request, responseObserver);
+        responseObserver.onNext(topicService.deleteTopic(request));
+        responseObserver.onCompleted();
     }
 }

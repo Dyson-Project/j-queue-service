@@ -1,38 +1,30 @@
 package vn.unicloud.genericqueue.server.services;
 
-import com.google.protobuf.ByteString;
 import com.google.rpc.Code;
-import io.grpc.Status;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
-import net.devh.boot.grpc.server.advice.GrpcExceptionHandler;
 import org.springframework.stereotype.Service;
 import vn.unicloud.genericqueue.exceptions.InternalException;
 import vn.unicloud.genericqueue.protobuf.*;
 import vn.unicloud.genericqueue.server.algorithm.CircularQueue;
+import vn.unicloud.genericqueue.server.utils.mapping.MessageMapperKt;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Queue;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
-import java.util.function.IntConsumer;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 @Service
 @Log4j2
 public class QueueManager {
-    private Map<String, Queue<byte[]>[]> topicMap = new ConcurrentHashMap<>();
+    private Map<String, Queue<Message>[]> topicMap = new ConcurrentHashMap<>();
 
     public Queue getQueue(String topic) {
         return null;
     }
 
-    public boolean offer(String topic, int queueIndex, byte[] payload) {
-        return topicMap.get(topic)[queueIndex].offer(payload);
+    public boolean offer(String topic, int queueIndex, Message message) {
+        return topicMap.get(topic)[queueIndex].offer(message);
     }
 
     public void publish(PublishRequest request) {
@@ -41,28 +33,14 @@ public class QueueManager {
             boolean offerResult = offer(
                     topic,
                     request.getQueueIndex(),
-                    e.getPayload().toByteArray()
+                    MessageMapperKt.toMessage(e)
             );
             log.info("offer rs: {}, {}, size {}", e.getId(), offerResult, topicMap.get(topic)[request.getQueueIndex()].size());
         });
         log.info(topicMap.get(topic)[0]);
     }
 
-    public TopicInfo createTopic(CreateTopicRequest request) {
-        String topicName = request.getTopicName();
-        QueueType queueType = request.getQueueType();
-        int topicSize = request.getTopicSize();
-        log.info("create topic {}", topicName);
-        Queue<byte[]>[] queues = Stream.generate(() -> this.newQueue(queueType))
-                .limit(topicSize).toArray(Queue[]::new);
-        topicMap.put(topicName, queues);
-        return TopicInfo.newBuilder()
-                .setTopicName(topicName)
-                .setSchemaId(UUID.randomUUID().toString())
-                .setQueueType(queueType)
-                .setTopicSize(topicSize)
-                .build();
-    }
+
 
     @SneakyThrows
     public FetchResponse getList(GetListRequest request) {
@@ -74,15 +52,10 @@ public class QueueManager {
                     .message("Queue not found")
                     .build();
         }
-        Queue<byte[]> queue = topicMap.get(topicName)[queueIndex];
-        log.info(topicMap);
-        log.info(queue);
-        Iterable<ConsumerMessage> messages = queue.stream()
-//                .skip(request.getOffset())
-//                .limit(request.getLimit())
-                .map(e -> ConsumerMessage.newBuilder()
-                        .setPayload(ByteString.copyFrom(e))
-                        .build())::iterator;
+        Queue<Message> queue = topicMap.get(topicName)[queueIndex];
+        Iterable<Message> messages = queue.stream()
+                .skip(request.getOffset())
+                .limit(request.getLimit())::iterator;
         return FetchResponse.newBuilder()
                 .addAllMessages(messages)
                 .build();
@@ -93,6 +66,15 @@ public class QueueManager {
             return false;
         }
         return true;
+    }
+
+    public void createQueueGroup(String topicName, QueueType type, int topicSize){
+        Queue<Message>[] queues = Stream.generate(() -> this.newQueue(type))
+                .limit(topicSize).toArray(Queue[]::new);
+        topicMap.put(topicName, queues);
+    }
+    public void deleteQueueGroup(String topicName){
+        topicMap.remove(topicName);
     }
 
     private Queue<byte[]> newQueue(QueueType type) {

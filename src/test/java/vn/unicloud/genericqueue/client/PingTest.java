@@ -16,7 +16,7 @@ import java.util.Iterator;
 
 @SpringBootTest
 public class PingTest {
-    @GrpcClient("agent-queue")
+    @GrpcClient("qc")
     private PingServiceGrpc.PingServiceBlockingStub pingStub;
 
 

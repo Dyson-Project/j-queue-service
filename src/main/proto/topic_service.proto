@@ -7,7 +7,6 @@ option java_outer_classname = "TopicProto";
 
 option go_package = "github.com/tiktzuki/genericequeue/go/proto";
 import "schema_service.proto";
-import "error.proto";
 
 enum QueueType {
   CIRCULAR_LINKED_LIST = 0;
@@ -53,8 +52,6 @@ message DeleteTopicRequest {
 }
 
 message DeleteTopicResponse {
-  bool is_success = 1;
-  Error error = 2;
 }
 
 service TopicService {

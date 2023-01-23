@@ -6,7 +6,6 @@ option java_package = "vn.unicloud.genericqueue.protobuf";
 option java_outer_classname = "GenericQueueProto";
 
 option go_package = "github.com/tiktzuki/genericequeue/go/proto";
-import "error.proto";
 import "schema_service.proto";
 import "topic_service.proto";
 
@@ -39,7 +38,7 @@ message ProducerMessage {
  * Represents an message that is consumed in a subscriber client.
  * In addition to the fields in ProducerMessage, ConsumerMessage has the replay_id field.
  */
-message ConsumerMessage {
+message Message {
   // The message's system generated guid
   string id = 1;
   // Schema fingerprint for this message which is hash of the schema
@@ -113,7 +112,7 @@ message GetListRequest {
  */
 message FetchResponse {
   // Received messages for subscription for client consumption
-  repeated ConsumerMessage messages = 1;
+  repeated Message messages = 1;
   // Latest replay ID of a subscription. Enables clients with an updated replay value so that they can keep track
   // of their last consumed replay. Clients will not have to start a subscription at a very old replay in the case where a resubscribe is necessary.
   bytes latest_replay_id = 2;
@@ -140,8 +139,6 @@ message PublishRequest {
 message PublishResult {
   // Replay ID of the message
   bytes replay_id = 1;
-  // Publish error if any
-  Error error = 2;
 }
 
 /*

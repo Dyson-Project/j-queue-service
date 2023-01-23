@@ -1,0 +1,13 @@
+<configuration scan="true">
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <Target>System.out</Target>
+        <encoder>
+            <pattern>%-100(%d{dd-MM-yy HH:mm:ss} %highlight(%-5level) %cyan(%logger{15}):%L) - %msg %n</pattern>
+        </encoder>
+        <withJansi>true</withJansi>
+    </appender>
+    <logger name="vn.unicloud" level="DEBUG"/>
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>

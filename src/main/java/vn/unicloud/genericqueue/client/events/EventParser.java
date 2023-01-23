@@ -19,7 +19,7 @@ import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.util.Utf8;
-import vn.unicloud.genericqueue.protobuf.ConsumerMessage;
+import vn.unicloud.genericqueue.protobuf.Message;
 
 
 public class EventParser {
@@ -32,7 +32,7 @@ public class EventParser {
 		this.datumReader = new GenericDatumReader<GenericRecord>(schema);
 	}
 
-	public Event parse(ConsumerMessage event) throws EventParseException {
+	public Event parse(Message event) throws EventParseException {
 		long replayId = EventParser.parseReplayId(event.getReplayId());
 		byte[] avroPayload = event.getPayload().toByteArray();
 		SeekableByteArrayInput byteStream = new SeekableByteArrayInput(avroPayload);

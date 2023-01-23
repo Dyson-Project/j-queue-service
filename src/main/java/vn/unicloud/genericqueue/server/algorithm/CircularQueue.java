@@ -1,21 +1,17 @@
 package vn.unicloud.genericqueue.server.algorithm;
 
+import lombok.ToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 public class CircularQueue<E> extends AbstractQueue<E> {
-    final Logger logger = LoggerFactory.getLogger(CircularQueue.class);
+    final Logger log = LoggerFactory.getLogger(CircularQueue.class);
 
     private Node<E> head = null;
     private Node<E> tail = null;
     private int size = 0;
-
-    public E getHead() {
-        return head.value;
-    }
 
     @Override
     public boolean offer(E e) {
@@ -65,7 +61,7 @@ public class CircularQueue<E> extends AbstractQueue<E> {
 
         if (head != null) {
             do {
-                logger.info(currentNode.value + " ");
+                log.info(currentNode.value + " ");
                 currentNode = currentNode.nextNode;
             } while (currentNode != head);
         }
@@ -139,22 +135,29 @@ public class CircularQueue<E> extends AbstractQueue<E> {
             this.value = value;
         }
 
+        @Override
+        public String toString() {
+            return String.format("id: %s,\n value: %s,\n nextNode: %s", hashCode(), value, nextNode.hashCode());
+        }
     }
 
     private class Itr implements Iterator<E> {
         Node<E> cursor;
+        boolean throughHead = false;
 
-        Itr(){
+        Itr() {
             cursor = CircularQueue.this.head;
         }
 
         public boolean hasNext() {
-            return this.cursor != null && this.cursor.nextNode!=null && this.cursor != CircularQueue.this.tail;
+            boolean hasNext = !(this.cursor == CircularQueue.this.head && throughHead);
+            return hasNext;
         }
 
         public E next() {
             Node<E> i = this.cursor;
-            if (i==null) {
+            throughHead = true;
+            if (i == null) {
                 throw new NoSuchElementException();
             } else {
                 E v = this.cursor.value;

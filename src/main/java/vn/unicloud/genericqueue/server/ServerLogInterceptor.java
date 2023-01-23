@@ -14,7 +14,7 @@ public class ServerLogInterceptor implements ServerInterceptor {
 
             @Override
             public void sendMessage(RespT message) {
-                log.debug("Sending message to cliens: {}", message);
+                log.debug("Send:\n{}", message);
                 super.sendMessage(message);
             }
         };
@@ -22,7 +22,7 @@ public class ServerLogInterceptor implements ServerInterceptor {
         return new ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT>(next.startCall(listener, headers)) {
             @Override
             public void onMessage(ReqT message) {
-                log.debug("Received message from cliens: {}", message);
+                log.debug("Received:\n{}", message);
                 super.onMessage(message);
             }
 

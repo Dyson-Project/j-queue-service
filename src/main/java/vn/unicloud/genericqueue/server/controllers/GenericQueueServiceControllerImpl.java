@@ -10,6 +10,7 @@ import net.devh.boot.grpc.server.service.GrpcService;
 import vn.unicloud.genericqueue.protobuf.*;
 import vn.unicloud.genericqueue.protobuf.Error;
 import vn.unicloud.genericqueue.server.services.QueueManager;
+import vn.unicloud.genericqueue.server.utils.mapping.MessageMapperKt;
 
 import javax.inject.Inject;
 
@@ -37,7 +38,7 @@ public class GenericQueueServiceControllerImpl extends GenericQueueServiceGrpc.G
             public void onNext(FetchRequest value) {
                 byte[] event = (byte[]) queueManager.getQueue(value.getTopicName()).poll();
                 responseObserver.onNext(FetchResponse.newBuilder()
-                        .addMessages(ConsumerMessage.newBuilder()
+                        .addMessages(Message.newBuilder()
                                 .setPayload(ByteString.copyFrom(event))
                                 .build())
                         .build());
@@ -70,16 +71,7 @@ public class GenericQueueServiceControllerImpl extends GenericQueueServiceGrpc.G
         return new StreamObserver<PublishRequest>() {
             @Override
             public void onNext(PublishRequest value) {
-                String topic = value.getTopicName();
-
-                value.getMessagesList().forEach(e -> {
-                    queueManager.offer(
-                            topic,
-                            value.getQueueIndex(),
-                            e.getPayload().toByteArray()
-                    );
-                });
-
+                queueManager.publish(value);
                 PublishResponse res = PublishResponse.newBuilder()
                         .addResults(PublishResult.newBuilder().build())
                         .build();
