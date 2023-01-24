@@ -8,9 +8,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import vn.unicloud.eventbus.protobuf.PingResponse;
 import vn.unicloud.genericqueue.protobuf.*;
 
+import javax.annotation.security.RunAs;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -26,16 +29,17 @@ public class GenericQueueTest {
     @GrpcClient(GRPC_CLIENT)
     private TopicServiceGrpc.TopicServiceBlockingStub topicStub;
     List<ProducerMessage> messages;
+
     @BeforeAll
-    public void beforeAll(){
+    public void beforeAll() {
         int totalMessageCount = 10;
         messages = Stream.generate(() ->
                         ProducerMessage.newBuilder()
                                 .setId(UUID.randomUUID().toString())
-//                                .setPayload(PingResponse
-//                                        .newBuilder()
-//                                        .setPong(true)
-//                                        .build().toByteString())
+                                .setPayload(PingResponse
+                                        .newBuilder()
+                                        .setPong(true)
+                                        .build().toByteString())
                                 .build())
                 .limit(totalMessageCount)
                 .collect(Collectors.toList());
@@ -62,18 +66,18 @@ public class GenericQueueTest {
                 .addAllMessages(messages)
                 .build());
 
-        Iterator itr = stub.getList(GetListRequest.newBuilder()
-                .setTopicName(TOPIC)
-                .setQueueIndex(queueIndex)
-                .setOffset(fetchMessageOffset)
-                .setLimit(fetchMessageLimit)
-                .build());
-        while (itr.hasNext()) {
-            log.info("-> {}", itr.next());
-        }
+        new FetchStreamWorker("testPubGetList",
+                stub.getList(GetListRequest.newBuilder()
+                        .setTopicName(TOPIC)
+                        .setQueueIndex(queueIndex)
+                        .setOffset(fetchMessageOffset)
+                        .setLimit(fetchMessageLimit)
+                        .build())
+        ).run();
     }
+
     @Test
-    public void testPubSub(){
+    public void testPubSub() {
         int queueIndex = 0;
         stub.publish(PublishRequest.newBuilder()
                 .setTopicName(TOPIC)
@@ -81,14 +85,37 @@ public class GenericQueueTest {
                 .addAllMessages(messages)
                 .build());
 
-        Iterator itr= stub.subscribe(FetchRequest.newBuilder()
+        new FetchStreamWorker("testPubSub",
+                stub.subscribe(FetchRequest.newBuilder()
                         .setTopicName(TOPIC)
                         .setQueueIndex(queueIndex)
                         .setReplayPreset(ReplayPreset.EARLIEST)
+                        .build())
+        ).run();
+    }
+
+    @Test
+    public void test2Subscriber() {
+        int queueIndex = 0;
+        stub.publish(PublishRequest.newBuilder()
+                .setTopicName(TOPIC)
+                .setQueueIndex(queueIndex)
+                .addAllMessages(messages)
                 .build());
-        while (itr.hasNext()) {
-            log.info("test received: {}", itr.next());
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        for (int i = 0; i < 2; i++) {
+            executor.execute(new FetchStreamWorker(String.valueOf(i),
+                    stub.subscribe(FetchRequest.newBuilder()
+                            .setTopicName(TOPIC)
+                            .setQueueIndex(queueIndex)
+                            .setReplayPreset(ReplayPreset.EARLIEST)
+                            .build())
+            ));
         }
+        executor.shutdown();
+        while (!executor.isTerminated()) {
+        }
+        log.info("Finished all threads");
     }
 
     @AfterEach
@@ -96,4 +123,21 @@ public class GenericQueueTest {
         topicStub.deleteTopic(DeleteTopicRequest.newBuilder().setTopicName(TOPIC).build());
     }
 
+    static class FetchStreamWorker implements Runnable {
+        Logger log = LoggerFactory.getLogger(GenericQueueTest.class);
+        Iterator subscriber;
+        String workerId;
+
+        public FetchStreamWorker(String workerId, Iterator itr) {
+            this.workerId = workerId;
+            subscriber = itr;
+        }
+
+        @Override
+        public void run() {
+            while (subscriber.hasNext()) {
+                log.info("subscriber {} received: {}", workerId, subscriber.next());
+            }
+        }
+    }
 }

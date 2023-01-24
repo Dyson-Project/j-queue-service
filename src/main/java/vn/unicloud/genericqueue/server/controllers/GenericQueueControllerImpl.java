@@ -1,21 +1,15 @@
 package vn.unicloud.genericqueue.server.controllers;
 
 import com.google.protobuf.ByteString;
-import io.grpc.Metadata;
-import io.grpc.Status;
-import io.grpc.protobuf.ProtoUtils;
-import io.grpc.reflection.v1alpha.ErrorResponse;
 import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
 import vn.unicloud.genericqueue.protobuf.*;
-import vn.unicloud.genericqueue.protobuf.Error;
 import vn.unicloud.genericqueue.server.services.QueueManager;
-import vn.unicloud.genericqueue.server.utils.mapping.MessageMapperKt;
 
 import javax.inject.Inject;
 
 @GrpcService
-public class GenericQueueServiceControllerImpl extends GenericQueueServiceGrpc.GenericQueueServiceImplBase {
+public class GenericQueueControllerImpl extends GenericQueueServiceGrpc.GenericQueueServiceImplBase {
     @Inject
     private QueueManager queueManager;
 
@@ -38,49 +32,42 @@ public class GenericQueueServiceControllerImpl extends GenericQueueServiceGrpc.G
 
     @Override
     public StreamObserver<FetchRequest> subscribeStream(StreamObserver<FetchResponse> responseObserver) {
-        return new StreamObserver<FetchRequest>() {
-            @Override
-            public void onNext(FetchRequest value) {
-                byte[] event = (byte[]) queueManager.getQueue(value.getTopicName()).poll();
-                responseObserver.onNext(FetchResponse.newBuilder()
-                        .addMessages(Message.newBuilder()
-                                .setPayload(ByteString.copyFrom(event))
-                                .build())
-                        .build());
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                t.printStackTrace();
-            }
-
-            @Override
-            public void onCompleted() {
-                responseObserver.onCompleted();
-            }
-        };
+        return super.subscribeStream(responseObserver);
+//        return new StreamObserver<FetchRequest>() {
+//            @Override
+//            public void onNext(FetchRequest value) {
+//                byte[] event = (byte[]) queueManager.getQueue(value.getTopicName()).poll();
+//                responseObserver.onNext(FetchResponse.newBuilder()
+//                        .addMessages(Message.newBuilder()
+//                                .setPayload(ByteString.copyFrom(event))
+//                                .build())
+//                        .build());
+//            }
+//
+//            @Override
+//            public void onError(Throwable t) {
+//                t.printStackTrace();
+//            }
+//
+//            @Override
+//            public void onCompleted() {
+//                responseObserver.onCompleted();
+//            }
+//        };
     }
 
     @Override
     public void publish(PublishRequest request, StreamObserver<PublishResponse> responseObserver) {
-        queueManager.publish(request);
-        PublishResponse res = PublishResponse.newBuilder()
-                .addResults(PublishResult.newBuilder().build())
-                .build();
-        responseObserver.onNext(res);
+        responseObserver.onNext(queueManager.publish(request));
         responseObserver.onCompleted();
     }
 
     @Override
     public StreamObserver<PublishRequest> publishStream(StreamObserver<PublishResponse> responseObserver) {
-        return new StreamObserver<PublishRequest>() {
+        return new StreamObserver<>() {
             @Override
             public void onNext(PublishRequest value) {
-                queueManager.publish(value);
-                PublishResponse res = PublishResponse.newBuilder()
-                        .addResults(PublishResult.newBuilder().build())
-                        .build();
-                responseObserver.onNext(res);
+                responseObserver.onNext(queueManager.publish(value));
             }
 
             @Override

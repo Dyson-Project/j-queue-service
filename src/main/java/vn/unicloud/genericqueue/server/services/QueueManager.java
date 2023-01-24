@@ -24,17 +24,24 @@ public class QueueManager {
         return null;
     }
 
-    public void publish(PublishRequest request) {
+    public PublishResponse publish(PublishRequest request) {
         String topic = request.getTopicName();
+        PublishResponse.Builder responseBuilder= PublishResponse.newBuilder();
         request.getMessagesList().forEach(e -> {
+            Message message = MessageMapperKt.toMessage(e);
             boolean offerResult = offer(
                     topic,
                     request.getQueueIndex(),
-                    MessageMapperKt.toMessage(e)
+                    message
             );
-            log.info("offer rs: {}, {}, size {}", e.getId(), offerResult, topicMap.get(topic)[request.getQueueIndex()].size());
+            responseBuilder.addResults(
+                    PublishResult.newBuilder()
+                            .setReplayId(message.getReplayId())
+                            .build()
+            );
+            log.debug("offer rs: {}, {}, size {}", e.getId(), offerResult, topicMap.get(topic)[request.getQueueIndex()].size());
         });
-        log.info(topicMap.get(topic)[0]);
+        return responseBuilder.build();
     }
 
     @SneakyThrows
@@ -49,8 +56,8 @@ public class QueueManager {
                     .build();
         }
         // TODO: write replay
-        ReplayPreset replayPreset = request.getReplayPreset();
-        ByteString replayId = request.getReplayId();
+//        ReplayPreset replayPreset = request.getReplayPreset();
+//        ByteString replayId = request.getReplayId();
         return topicMap.get(topic)[queueIndex].poll();
     }
 
