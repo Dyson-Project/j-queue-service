@@ -21,13 +21,18 @@ public class GenericQueueServiceControllerImpl extends GenericQueueServiceGrpc.G
 
     @Override
     public void subscribe(FetchRequest request, StreamObserver<FetchResponse> responseObserver) {
+        Message m;
         while (true) {
-            responseObserver.onNext(null);
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+            while ((m = queueManager.fetch(request)) == null) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
+            responseObserver.onNext(FetchResponse.newBuilder()
+                    .addMessages(m)
+                    .build());
         }
     }
 

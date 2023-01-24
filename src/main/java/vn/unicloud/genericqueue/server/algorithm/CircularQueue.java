@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-public class CircularQueue<E> extends AbstractQueue<E> {
+public class CircularQueue<E> extends GenericQueue<E> {
     final Logger log = LoggerFactory.getLogger(CircularQueue.class);
 
     private Node<E> head = null;
@@ -52,13 +52,11 @@ public class CircularQueue<E> extends AbstractQueue<E> {
 
     @Override
     public E peek() {
-        return null;
+        return head != null ? head.value : null;
     }
 
     public void traverse() {
-
         Node<E> currentNode = head;
-
         if (head != null) {
             do {
                 log.info(currentNode.value + " ");
@@ -85,28 +83,27 @@ public class CircularQueue<E> extends AbstractQueue<E> {
     public boolean contains(Object o) {
         Node<E> currentNode = head;
 
-        if (head == null) {
-            return false;
-        } else {
+        if (head != null) {
             do {
                 if (currentNode.value == o) {
                     return true;
                 }
                 currentNode = currentNode.nextNode;
             } while (currentNode != head);
-            return false;
         }
+        return false;
 
     }
 
-    public void delete(E valueToDelete) {
+    @Override
+    public boolean remove(Object e) {
         Node<E> currentNode = head;
         if (head == null) {
-            return;
+            return false;
         }
         do {
             Node<E> nextNode = currentNode.nextNode;
-            if (nextNode.value == valueToDelete) {
+            if (nextNode.value == e) {
                 if (tail == head) {
                     head = null;
                     tail = null;
@@ -120,10 +117,11 @@ public class CircularQueue<E> extends AbstractQueue<E> {
                     }
                 }
                 size--;
-                break;
+                return true;
             }
             currentNode = nextNode;
         } while (currentNode != head);
+        return false;
     }
 
     public static class Node<E> {

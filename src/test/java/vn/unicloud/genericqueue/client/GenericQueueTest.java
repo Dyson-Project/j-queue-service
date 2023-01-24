@@ -1,9 +1,7 @@
 package vn.unicloud.genericqueue.client;
 
 import net.devh.boot.grpc.client.inject.GrpcClient;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @SpringBootTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class GenericQueueTest {
     Logger log = LoggerFactory.getLogger(GenericQueueTest.class);
     static final String TOPIC = "test";
@@ -26,6 +25,21 @@ public class GenericQueueTest {
     private GenericQueueServiceGrpc.GenericQueueServiceBlockingStub stub;
     @GrpcClient(GRPC_CLIENT)
     private TopicServiceGrpc.TopicServiceBlockingStub topicStub;
+    List<ProducerMessage> messages;
+    @BeforeAll
+    public void beforeAll(){
+        int totalMessageCount = 10;
+        messages = Stream.generate(() ->
+                        ProducerMessage.newBuilder()
+                                .setId(UUID.randomUUID().toString())
+//                                .setPayload(PingResponse
+//                                        .newBuilder()
+//                                        .setPong(true)
+//                                        .build().toByteString())
+                                .build())
+                .limit(totalMessageCount)
+                .collect(Collectors.toList());
+    }
 
     @BeforeEach
     public void beforeEach() {
@@ -39,20 +53,9 @@ public class GenericQueueTest {
 
     @Test
     public void testPubGetList() {
-        int totalMessageCount = 10;
         int fetchMessageLimit = 5;
         int fetchMessageOffset = 6;
         int queueIndex = 0;
-        List<ProducerMessage> messages = Stream.generate(() ->
-                        ProducerMessage.newBuilder()
-                                .setId(UUID.randomUUID().toString())
-                                .setPayload(PingResponse
-                                        .newBuilder()
-                                        .setPong(true)
-                                        .build().toByteString())
-                                .build())
-                .limit(totalMessageCount)
-                .collect(Collectors.toList());
         stub.publish(PublishRequest.newBuilder()
                 .setTopicName(TOPIC)
                 .setQueueIndex(queueIndex)
@@ -65,9 +68,26 @@ public class GenericQueueTest {
                 .setOffset(fetchMessageOffset)
                 .setLimit(fetchMessageLimit)
                 .build());
-        log.info("Test result:");
         while (itr.hasNext()) {
             log.info("-> {}", itr.next());
+        }
+    }
+    @Test
+    public void testPubSub(){
+        int queueIndex = 0;
+        stub.publish(PublishRequest.newBuilder()
+                .setTopicName(TOPIC)
+                .setQueueIndex(queueIndex)
+                .addAllMessages(messages)
+                .build());
+
+        Iterator itr= stub.subscribe(FetchRequest.newBuilder()
+                        .setTopicName(TOPIC)
+                        .setQueueIndex(queueIndex)
+                        .setReplayPreset(ReplayPreset.EARLIEST)
+                .build());
+        while (itr.hasNext()) {
+            log.info("test received: {}", itr.next());
         }
     }
 
