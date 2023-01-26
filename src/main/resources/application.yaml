@@ -1,19 +1,40 @@
+server:
+  port: 8080
+spring:
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb+srv://tik:P%40ssword789@cluster0.bh9kt.mongodb.net/?retryWrites=true&w=majority}
+      database: test
+  mvc:
+    format:
+      date-time: iso
+      date: iso
+      time: iso
 # ===============================
 # GRPC [queue service]
 # ===============================
 grpc:
+  server:
+    port: 9090
   client:
-    agent-queue:
-      address: 'static://127.0.0.1:9090'
+    agent:
+      address: ${GRPC_CLIENT_AGENT_ADDRESS:static://127.0.0.1:9090}
       enableKeepAlive: true
       keepAliveWithoutCalls: true
       negotiationType: plaintext
     qc:
-      address: 'static://127.0.0.1:9090'
+      address: ${GRPC_CLIENT_QC_ADDRESS:static://127.0.0.1:9090}
       enableKeepAlive: true
       keepAliveWithoutCalls: true
       negotiationType: plaintext
-
 logging:
   level:
     grpc: debug
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+    org.apache.kafka: INFO
+    org.apache.kafka.common.metrics: INFO
+    org.apache.kafka.clients.consumer.internals: INFO
+    org.apache.kafka.clients.consumer.internals.Fetcher: INFO
+#springdoc:
+#  swagger-ui:
+#    path: /api

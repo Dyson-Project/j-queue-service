@@ -16,7 +16,7 @@ buildscript {
         lombokPluginVersion = '6.6.1'
         versioningPluginVersion = '2.15.1'
         versionsPluginVersion = '0.44.0'
-        kotlinVersion = "1.7.22"
+        kotlinVersion = "1.8.0"
     }
 }
 plugins {
@@ -48,7 +48,7 @@ repositories {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
+//    implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'com.google.code.gson:gson:2.9.0'
     implementation 'org.apache.avro:avro:1.11.0'
     implementation group: 'io.grpc', name: 'grpc-netty-shaded', version: grpcVersion
@@ -69,6 +69,8 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
+    implementation project(':restproxy')
+    implementation project(':persistence')
 }
 
 tasks.named('test') {

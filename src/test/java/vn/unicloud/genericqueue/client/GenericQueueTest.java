@@ -23,6 +23,7 @@ public class GenericQueueTest {
     Logger log = LoggerFactory.getLogger(GenericQueueTest.class);
     static final String TOPIC = "test";
     static final String GRPC_CLIENT = "qc";
+    static final long TEST_TIMEOUT = 5_000;
 
     @GrpcClient(GRPC_CLIENT)
     private GenericQueueServiceGrpc.GenericQueueServiceBlockingStub stub;
@@ -56,6 +57,7 @@ public class GenericQueueTest {
     }
 
     @Test
+    @Timeout(5)
     public void testPubGetList() {
         int fetchMessageLimit = 5;
         int fetchMessageOffset = 6;
@@ -72,11 +74,13 @@ public class GenericQueueTest {
                         .setQueueIndex(queueIndex)
                         .setOffset(fetchMessageOffset)
                         .setLimit(fetchMessageLimit)
-                        .build())
+                        .build()),
+                TEST_TIMEOUT
         ).run();
     }
 
     @Test
+    @Timeout(5)
     public void testPubSub() {
         int queueIndex = 0;
         stub.publish(PublishRequest.newBuilder()
@@ -90,11 +94,13 @@ public class GenericQueueTest {
                         .setTopicName(TOPIC)
                         .setQueueIndex(queueIndex)
                         .setReplayPreset(ReplayPreset.EARLIEST)
-                        .build())
+                        .build()),
+                TEST_TIMEOUT
         ).run();
     }
 
     @Test
+    @Timeout(5)
     public void test2Subscriber() {
         int queueIndex = 0;
         stub.publish(PublishRequest.newBuilder()
@@ -109,7 +115,8 @@ public class GenericQueueTest {
                             .setTopicName(TOPIC)
                             .setQueueIndex(queueIndex)
                             .setReplayPreset(ReplayPreset.EARLIEST)
-                            .build())
+                            .build()),
+                    TEST_TIMEOUT
             ));
         }
         executor.shutdown();
@@ -127,16 +134,22 @@ public class GenericQueueTest {
         Logger log = LoggerFactory.getLogger(GenericQueueTest.class);
         Iterator subscriber;
         String workerId;
+        long timeout;
 
-        public FetchStreamWorker(String workerId, Iterator itr) {
+        public FetchStreamWorker(String workerId, Iterator itr, long timeout) {
             this.workerId = workerId;
             subscriber = itr;
+            this.timeout = timeout;
         }
 
         @Override
         public void run() {
+            long end = System.currentTimeMillis() + timeout;
             while (subscriber.hasNext()) {
                 log.info("subscriber {} received: {}", workerId, subscriber.next());
+                if(System.currentTimeMillis() >= end){
+                    break;
+                }
             }
         }
     }

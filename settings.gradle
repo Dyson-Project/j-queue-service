@@ -1,1 +1,3 @@
 rootProject.name = 'generic-queue'
+include 'restproxy'
+include 'persistence'
