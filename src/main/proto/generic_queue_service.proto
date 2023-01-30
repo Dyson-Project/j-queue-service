@@ -9,6 +9,7 @@ option go_package = "github.com/tiktzuki/genericequeue/go/proto";
 import "schema_service.proto";
 import "topic_service.proto";
 
+
 /*
  * Reserved for future use.
  * Header that contains information for distributed tracing, filtering, routing, etc.

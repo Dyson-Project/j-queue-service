@@ -12,6 +12,20 @@ public class CircularQueue<E> extends GenericQueue<E> {
     private Node<E> head = null;
     private Node<E> tail = null;
     private int size = 0;
+    private String id;
+
+    public CircularQueue(String id){
+        this.id = id;
+    }
+    @Override
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    @Override
+    public String getId() {
+        return id;
+    }
 
     @Override
     public boolean offer(E e) {
@@ -123,6 +137,7 @@ public class CircularQueue<E> extends GenericQueue<E> {
         } while (currentNode != head);
         return false;
     }
+
 
     public static class Node<E> {
 

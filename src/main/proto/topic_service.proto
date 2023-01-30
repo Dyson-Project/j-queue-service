@@ -25,7 +25,7 @@ message TopicInfo {
    */
   string schema_id = 5;
   QueueType queue_type = 6;
-  uint32 topicSize = 7;
+  int32 topicSize = 7;
   // RPC ID used to trace errors.
   string rpc_id = 8;
 }

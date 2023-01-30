@@ -1,0 +1,42 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '2.7.7'
+    id 'io.spring.dependency-management' version '1.1.0'
+    id 'org.jetbrains.kotlin.jvm' version '1.8.0'
+}
+
+group = 'vn.unicloud'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    def springDocVersion = '1.6.11'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter'
+    /**
+     * Open API
+     */
+    implementation group: 'org.springdoc', name: 'springdoc-openapi-ui', version: springDocVersion
+    implementation group: 'org.springdoc', name: 'springdoc-openapi-data-rest', version: springDocVersion
+    implementation 'org.springdoc:springdoc-openapi-webflux-ui:1.6.11'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation project(':persistence')
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

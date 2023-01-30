@@ -8,7 +8,7 @@ import vn.unicloud.genericqueue.exceptions.InternalException;
 @GrpcAdvice
 public class GrpcExceptionAdvice {
     @GrpcExceptionHandler(InternalException.class)
-    public Status handleInternalException(InternalException e){
+    public Status handleInternalException(InternalException e) {
         return Status
                 .fromCodeValue(e.getCode())
                 .withDescription(e.getMessage())

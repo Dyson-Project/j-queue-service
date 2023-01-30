@@ -3,8 +3,7 @@ server:
 spring:
   data:
     mongodb:
-      uri: ${MONGO_URI:mongodb+srv://tik:P%40ssword789@cluster0.bh9kt.mongodb.net/?retryWrites=true&w=majority}
-      database: test
+      uri: ${MONGO_URI:mongodb+srv://tik:Ld201199@cluster0.bh9kt.mongodb.net/test?retryWrites=true&w=majority}
   mvc:
     format:
       date-time: iso
@@ -35,6 +34,9 @@ logging:
     org.apache.kafka.common.metrics: INFO
     org.apache.kafka.clients.consumer.internals: INFO
     org.apache.kafka.clients.consumer.internals.Fetcher: INFO
-#springdoc:
-#  swagger-ui:
-#    path: /api
+springdoc:
+  swagger-ui:
+    path: /
+zookeeper:
+  host: 192.168.1.7
+  port: 21811
